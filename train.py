@@ -5,8 +5,8 @@ import wandb
 import os
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from dataset import LunaDataset
-from model import LunaModel
+from dataset import LunaSegDataset, LunaSegDatasetTrain
+from model import UNetWrapper
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 
@@ -36,7 +36,7 @@ def main(cfg):
 
     # dataset
     train_dataloader = DataLoader(
-        LunaDataset(
+        LunaSegDatasetTrain(
             data_root=cfg.data_root,
             val_stride=10
         ),
@@ -45,10 +45,11 @@ def main(cfg):
         pin_memory=True
     )
     val_dataloader = DataLoader(
-        LunaDataset(
+        LunaSegDataset(
             data_root=cfg.data_root,
             val_stride=10,
-            split='val'
+            split='val',
+            context_slices_count=3,
         ),
         batch_size=cfg.bacth_size,
         shuffle=False,
@@ -59,7 +60,7 @@ def main(cfg):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # model
-    model = LunaModel().to(device)
+    model = UNetWrapper().to(device)
 
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model, device_ids=cfg.device_id)
