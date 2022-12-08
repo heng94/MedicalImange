@@ -83,8 +83,7 @@ class UNetUpBlock(nn.Module):
     def __init__(self, in_size, out_size, up_mode, padding, batch_norm):
         super(UNetUpBlock, self).__init__()
         if up_mode == 'upconv':
-            self.up = nn.ConvTranspose2d(in_size, out_size, kernel_size=2,
-                                         stride=2)
+            self.up = nn.ConvTranspose2d(in_size, out_size, kernel_size=2, stride=2)
         elif up_mode == 'upsample':
             self.up = nn.Sequential(
                 nn.Upsample(mode='bilinear', scale_factor=2),
@@ -105,5 +104,4 @@ class UNetUpBlock(nn.Module):
         crop1 = self.center_crop(bridge, up.shape[2:])
         out = torch.cat([up, crop1], 1)
         out = self.conv_block(out)
-
         return out
