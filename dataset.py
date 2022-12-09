@@ -15,15 +15,10 @@ from utils import *
 raw_cache = get_cache('cache_raw')
 candidate_info_tuple = namedtuple(
     'candidate_info_tuple',
-    'is_nodule_bool, '
-    'has_annotation_bool, '
-    'is_mal_bool, '
-    'diameter_mm, '
-    'series_uid, '
-    'center_xyz'
+    'is_nodule_bool, has_annotation_bool, is_mal_bool, diameter_mm, series_uid, center_xyz'
 )
-xyz_tuple = collections.namedtuple('XyzTuple', ['x', 'y', 'z'])
-irc_tuple = collections.namedtuple('IrcTuple', ['index', 'row', 'col'])
+xyz_tuple = collections.namedtuple('xyz_tuple', ['x', 'y', 'z'])
+irc_tuple = collections.namedtuple('irc_tuple', ['index', 'row', 'col'])
 
 
 @functools.lru_cache(1)
@@ -54,10 +49,8 @@ def get_candidate_list(data_root, require_disk_bool=True):
             series_uid = row[0]
             if series_uid not in on_disk_set and require_disk_bool:
                 continue
-
             is_nodule_bool = bool(int(row[4]))
             candidate_center_xyz = tuple([float(x) for x in row[1:4]])
-
             if not is_nodule_bool:
                 candidate_list.append(
                     candidate_info_tuple(
@@ -230,7 +223,7 @@ class LunaSegDataset(Dataset):
 
         self.sample_list = []
         for series_uid in self.series_list:
-            index_count, positive_indexes = get_ct_sample_size(series_uid)
+            index_count, positive_indexes = get_ct_sample_size(series_uid, data_root=self.data_root)
             if self.full_ct_bool:
                 self.sample_list += [(series_uid, slice_idx) for slice_idx in range(index_count)]
             else:
@@ -277,11 +270,11 @@ class LunaSegDatasetTrain(LunaSegDataset):
 
     def __getitem__(self, idx):
         candidate_tup = self.pos_list[idx % len(self.pos_list)]
-        return self.getitem_trainingCrop(candidate_tup)
+        return self.getitem_training_crop(candidate_tup)
 
-    @staticmethod
-    def getitem_training_crop(candidate_tup):
+    def getitem_training_crop(self, candidate_tup):
         ct_a, pos_a, center_irc = get_ct_raw_candidate(
+            self.data_root,
             candidate_tup.series_uid,
             candidate_tup.center_xyz,
             (7, 96, 96),
@@ -298,15 +291,15 @@ class LunaSegDatasetTrain(LunaSegDataset):
         return ct_t, pos_t, candidate_tup.series_uid, slice_ndx
 
 
-# train_dataloader = DataLoader(
-#     LunaDataset(
-#         data_root='/data_hdd2/users/ZhouHeng/Projects/HW/ParallelComputerVision/Luna/',
-#         val_stride=10
-#     ),
-#     batch_size=2,
-#     shuffle=True,
-#     pin_memory=True
-# )
-#
-# for batch in train_dataloader:
-#     print('1')
+train_dataloader = DataLoader(
+    LunaSegDatasetTrain(
+        data_root='/data_hdd2/users/ZhouHeng/Projects/HW/ParallelComputerVision/Luna/',
+        val_stride=10
+    ),
+    batch_size=2,
+    shuffle=True,
+    pin_memory=True
+)
+
+for batch in train_dataloader:
+    print('1')

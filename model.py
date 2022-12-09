@@ -11,6 +11,7 @@ class UNetWrapper(nn.Module):
         self.input_batch_norm = nn.BatchNorm2d(kwargs['in_channels'])
         self.unet = UNet(**kwargs)
         self.final = nn.Sigmoid()
+        # self.final = nn.Softmax()
 
         self._init_weights()
 

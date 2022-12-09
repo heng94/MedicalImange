@@ -4,15 +4,7 @@ from torch import nn
 
 
 class UNet(nn.Module):
-    def __init__(
-            self,
-            in_channels=1,
-            n_classes=2,
-            depth=5,
-            wf=6,
-            padding=False,
-            batch_norm=False,
-            up_mode='upconv'):
+    def __init__(self, in_channels=1, n_classes=2, depth=5, wf=6, padding=False, batch_norm=False, up_mode='upconv'):
         super(UNet, self).__init__()
         assert up_mode in ('upconv', 'upsample')
         self.padding = padding
@@ -20,27 +12,13 @@ class UNet(nn.Module):
         prev_channels = in_channels
         self.down_path = nn.ModuleList()
         for i in range(depth):
-            self.down_path.append(
-                UNetConvBlock(
-                    prev_channels,
-                    2 ** (wf + i),
-                    padding,
-                    batch_norm
-                )
-            )
+            self.down_path.append(UNetConvBlock(prev_channels, 2 ** (wf + i), padding, batch_norm))
             prev_channels = 2 ** (wf + i)
 
         self.up_path = nn.ModuleList()
         for i in reversed(range(depth - 1)):
             self.up_path.append(
-                UNetUpBlock(
-                    prev_channels,
-                    2 ** (wf + i),
-                    up_mode,
-                    padding,
-                    batch_norm
-                )
-            )
+                UNetUpBlock(prev_channels, 2 ** (wf + i), up_mode, padding, batch_norm))
             prev_channels = 2 ** (wf + i)
 
         self.last = nn.Conv2d(prev_channels, n_classes, kernel_size=1)
